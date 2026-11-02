@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>قوانين سيرفر YouTube_OPx</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+<style>
+/* ================= CSS ================= */
+:root {
+  --bg: #0f111a;
+  --surface: #1a1d2d;
+  --surface-hover: #23273d;
+  --primary: #5865F2;
+  --primary-hover: #4752c4;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border: #2d3348;
+  --success: #22c55e;
+  --danger: #ef4444;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Cairo', sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+  
+  /* ====== حماية من النسخ ====== */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* استثناء مربع البحث ليتمكن المستخدم من الكتابة */
+input {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Nav */
+.nav {
+  position: fixed; top: 0; width: 100%; z-index: 100;
+  background: rgba(15, 17, 26, 0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  max-width: 1100px; margin: 0 auto; padding: 15px 20px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; font-weight: 700; font-size: 1.2rem; }
+.brand-block { width: 20px; height: 20px; background: var(--primary); border-radius: 4px; display: inline-block; }
+.brand-text b { color: var(--primary); }
+.nav-links { display: none; gap: 20px; }
+.nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 600; transition: 0.3s; }
+.nav-links a:hover { color: var(--primary); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 20px; border-radius: 8px; font-family: inherit; font-weight: 700;
+  cursor: pointer; border: none; text-decoration: none; transition: 0.3s; font-size: 1rem;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-ghost:hover { background: var(--surface-hover); }
+.btn-discord { background: #5865F2; color: white; }
+.btn-discord:hover { background: #4752c4; }
+
+/* Hero */
+.hero {
+  padding: 140px 20px 60px; text-align: center;
+  background: radial-gradient(circle at top, #1e243a 0%, var(--bg) 70%);
+}
+
+/* ======== تصميم وحماية الصورة ======== */
+.hero-image-wrap {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto 30px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  border: 2px solid var(--border);
+  /* منع تحديد الصورة */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.hero-image-wrap img {
+  width: 100%;
+  height: auto;
+  display: block;
+  /* منع سحب الصورة ومنع تفاعل الماوس معها */
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+/* طبقة شفافة فوق الصورة لمنع النقر عليها */
+.image-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 10;
+  background: transparent;
+}
+/* ==================================== */
+
+.hero-badge { display: inline-block; background: rgba(88, 101, 242, 0.1); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-weight: 700; margin-bottom: 20px; border: 1px solid rgba(88, 101, 242, 0.3); }
+.hero h1 { font-size: 2.5rem; margin-bottom: 15px; font-weight: 900; }
+.hero h1 span { color: var(--primary); direction: ltr; display: inline-block; }
+.hero-sub { color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto 30px; }
+.hero-actions { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+
+.stats { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
+.stat { display: flex; flex-direction: column; align-items: center; }
+.stat b { font-size: 1.5rem; color: var(--primary); }
+.stat span { color: var(--text-muted); font-size: 0.9rem; }
+
+/* Container */
+.container { max-width: 1100px; margin: 0 auto; padding: 60px 20px; }
+.section-head { text-align: center; margin-bottom: 40px; }
+.section-head h2 { font-size: 2rem; margin-bottom: 10px; }
+.section-head p { color: var(--text-muted); }
+
+/* Toolbar */
+.toolbar { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+.search { position: relative; max-width: 500px; margin: 0 auto; width: 100%; }
+.search input {
+  width: 100%; padding: 12px 40px 12px 20px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border); color: white;
+  font-family: inherit; font-size: 1rem; outline: none; transition: 0.3s;
+}
+.search input:focus { border-color: var(--primary); }
+.search-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.chip {
+  padding: 8px 16px; border-radius: 20px; background: var(--surface);
+  border: 1px solid var(--border); color: var(--text); cursor: pointer;
+  font-family: inherit; font-weight: 600; transition: 0.3s;
+}
+.chip.active, .chip:hover { background: var(--primary); border-color: var(--primary); color: white; }
+
+/* Rules Grid */
+.rules-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+.rule-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: 0.3s; }
+.rule-card:hover { border-color: var(--primary); }
+.rule-head {
+  padding: 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+  background: var(--surface-hover); user-select: none;
+}
+.rule-head h3 { font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+.rule-body { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.rule-body ul { list-style: none; padding: 20px 0; }
+.rule-body li { margin-bottom: 12px; display: flex; gap: 10px; align-items: flex-start; }
+.rule-body li::before { content: '•'; color: var(--primary); font-size: 1.5rem; line-height: 1; }
+.rule-card.open .rule-body { max-height: 1000px; }
+.rule-card.open .chev { transform: rotate(180deg); }
+.chev { transition: 0.3s; color: var(--text-muted); }
+
+.empty { text-align: center; padding: 40px; color: var(--text-muted); font-size: 1.2rem; display: none; }
+
+/* Table */
+.table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+.table { width: 100%; border-collapse: collapse; text-align: right; background: var(--surface); }
+.table th, .table td { padding: 15px 20px; border-bottom: 1px solid var(--border); }
+.table th { background: var(--surface-hover); font-weight: 700; }
+.table tr:last-child td { border-bottom: none; }
+.lvl { display: inline-block; width: 30px; height: 30px; line-height: 30px; text-align: center; border-radius: 50%; font-weight: bold; color: white; }
+.lvl-1, .lvl-2 { background: var(--success); }
+.lvl-3, .lvl-4 { background: #eab308; }
+.lvl-5, .lvl-6 { background: #f97316; }
+.lvl-7 { background: var(--danger); }
+.note { margin-top: 20px; padding: 15px; background: rgba(239, 68, 68, 0.1); border-right: 4px solid var(--danger); border-radius: 8px; color: #fca5a5; }
+
+/* FAQ */
+.faq { display: flex; flex-direction: column; gap: 15px; max-width: 800px; margin: 0 auto; }
+.faq-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.faq-q { width: 100%; padding: 20px; background: none; border: none; color: white; font-family: inherit; font-size: 1.1rem; font-weight: 700; text-align: right; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+.faq-a-inner { padding: 0 20px 20px; color: var(--text-muted); }
+.faq-a-inner b { color: var(--primary); direction: ltr; display: inline-block; }
+.faq-item.open .faq-a { max-height: 200px; }
+.faq-item.open .chev { transform: rotate(180deg); }
+
+/* Footer */
+.footer { border-top: 1px solid var(--border); padding: 30px 20px; text-align: center; margin-top: 60px; }
+.footer-inner { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+.footer p { color: var(--text-muted); font-size: 0.9rem; }
+
+/* Utilities */
+.to-top { position: fixed; bottom: 20px; left: 20px; width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 1.2rem; z-index: 99; }
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--success); color: white; padding: 10px 20px; border-radius: 8px; transform: translateY(100px); opacity: 0; transition: 0.3s; z-index: 100; font-weight: bold; }
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* Desktop */
+@media (min-width: 768px) {
+  .nav-links { display: flex; }
+  .hero h1 { font-size: 3.5rem; }
+  .toolbar { flex-direction: row; justify-content: space-between; align-items: center; }
+  .chips { justify-content: flex-end; }
+  .rules-grid { grid-template-columns: repeat(2, 1fr); }
+  .footer-inner { flex-direction: row; justify-content: space-between; }
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a href="#" class="brand">
+      <span class="brand-block"></span>
+      <span class="brand-text"><b>YouTube</b>_OPx</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#rules">القوانين</a>
+      <a href="#punishments">العقوبات</a>
+      <a href="#faq">الأسئلة</a>
+    </nav>
+    <a class="btn btn-discord" href="https://discord.gg/PyScKawRw" target="_blank">
+      انضم للديسكورد
+    </a>
+  </div>
+</header>
+
+<section class="hero">
+  <!-- إضافة الصورة هنا -->
+  <div class="hero-image-wrap">
+    <img src="https://i.ibb.co/5g3vrdxg/IMG-20261102-WA8795.jpg" alt="صورة السيرفر" oncontextmenu="return false;" ondragstart="return false;">
+    <div class="image-overlay"></div>
+  </div>
+
+  <div class="hero-badge">⚡ سيرفر ماين كرافت العربي</div>
+  <h1>قوانين <span>YouTube_OPx</span></h1>
+  <p class="hero-sub">قبل ما تبدأ اللعب، اقرأ القوانين منيح. احترامك للقوانين بيخلي السيرفر ممتع للكل.</p>
+  <div class="hero-actions">
+    <a href="#rules" class="btn btn-primary">📖 اقرأ القوانين</a>
+    <button class="btn btn-ghost" id="copyInvite">🔗 نسخ رابط الديسكورد</button>
+  </div>
+  <div class="stats">
+    <div class="stat"><b id="statCount">0</b><span>قانون</span></div>
+    <div class="stat"><b>24/7</b><span>مفتوح</span></div>
+    <div class="stat"><b>5</b><span>أقسام</span></div>
+  </div>
+</section>
+
+<main id="rules" class="container">
+  <div class="section-head">
+    <h2>📜 قوانين السيرفر</h2>
+    <p>اضغط على أي قسم عشان يفتح وتشوف القوانين</p>
+  </div>
+  <div class="toolbar">
+    <div class="search">
+      <span class="search-icon">🔍</span>
+      <input id="searchInput" type="text" placeholder="ابحث عن قانون..." autocomplete="off">
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+  <div class="rules-grid" id="rulesGrid"></div>
+  <div class="empty" id="empty">😕 ما في نتائج مطابقة لبحثك</div>
+</main>
+
+<section id="punishments" class="container">
+  <div class="section-head">
+    <h2>⚖️ العقوبات</h2>
+    <p>المخالفة المتكررة تعني عقوبة أكبر</p>
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>المستوى</th><th>العقوبة</th><th>المدة</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="lvl lvl-1">1</span></td><td>تحذير شفهي</td><td>—</td></tr>
+        <tr><td><span class="lvl lvl-2">2</span></td><td>كتم (Mute)</td><td>10 دقائق</td></tr>
+        <tr><td><span class="lvl lvl-3">3</span></td><td>كتم (Mute)</td><td>ساعة</td></tr>
+        <tr><td><span class="lvl lvl-4">4</span></td><td>كتم (Mute)</td><td>24 ساعة</td></tr>
+        <tr><td><span class="lvl lvl-5">5</span></td><td>حظر مؤقت</td><td>3 أيام</td></tr>
+        <tr><td><span class="lvl lvl-6">6</span></td><td>حظر مؤقت</td><td>أسبوع</td></tr>
+        <tr><td><span class="lvl lvl-7">7</span></td><td>حظر دائم</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">⚠️ الإدارة تحتفظ بحق تعديل العقوبة حسب خطورة المخالفة، وقرار الإدارة نهائي.</div>
+</section>
+
+<section id="faq" class="container">
+  <div class="section-head">
+    <h2>❓ الأسئلة الشائعة</h2>
+  </div>
+  <div class="faq" id="faqList">
+    <div class="faq-item">
+      <button class="faq-q" type="button">كيف أقدم طلب فك حظر؟ <span class="chev">▾</span></button>
+      <div class="faq-a"><div class="faq-a-inner">افتح تكت (Ticket) في قناة <b>#🎫-تذاكر-الدعم</b> واكتب اسمك وسبب الحظر، والإدارة بترد عليك بأقرب وقت.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">كيف أبلّغ عن لاعب مخالف؟ <span class="chev">▾</span></button>
+      <div class="faq-a"><div class="faq-a-inner">خذ صورة (Screenshot) أو مقطع فيديو للمخالفة، وافتح تكت في <b>#🎫-تذاكر-الدعم</b> مع الدليل.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">هل يمكنني التحدث بلغة أخرى؟ <span class="chev">▾</span></button>
+      <div class="faq-a"><div class="faq-a-inner">اللغة الأساسية هي العربية، لكن يُسمح بالإنجليزية في القنوات العامة بشرط عدم الإزعاج.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" type="button">كيف أحصل على رتبة؟ <span class="chev">▾</span></button>
+      <div class="faq-a"><div class="faq-a-inner">الرتب تُمنح حسب النشاط والتفاعل، أو من خلال التقديم على طاقم الإشراف عند فتح باب التقديم.</div></div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="brand">
+      <span class="brand-block"></span>
+      <span class="brand-text"><b>YouTube</b>_OPx</span>
+    </div>
+    <p>© <span id="year"></span> جميع الحقوق محفوظة — سيرفر YouTube_OPx</p>
+    <a class="btn btn-discord" href="https://discord.gg/PyScKawRw" target="_blank">ديسكورد</a>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="أعلى الصفحة">↑</button>
+<div class="toast" id="toast">تم نسخ رابط الديسكورد بنجاح!</div>
+
+<script>
+/* ================= JS ================= */
+document.getElementById('year').textContent = new Date().getFullYear();
+
+// ================= حماية مشددة (نصوص + صور + أدوات فحص) =================
+
+// 1. منع النقر بزر الماوس الأيمن
+document.addEventListener('contextmenu', event => event.preventDefault());
+
+// 2. منع اختصارات الكيبورد الخطيرة
+document.addEventListener('keydown', (e) => {
+  // منع (F12)
+  if (e.key === 'F12' || e.keyCode === 123) {
+    e.preventDefault();
+    return false;
+  }
+  // منع (Ctrl+Shift+I) أو (Ctrl+Shift+J) أو (Ctrl+Shift+C) لفتح أدوات المتصفح
+  if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
+    e.preventDefault();
+    return false;
+  }
+  // منع نسخ النصوص (Ctrl+C)
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C' || e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S')) {
+    e.preventDefault();
+    return false;
+  }
+});
+
+// 3. منع سحب الصور (Drag & Drop)
+document.addEventListener('dragstart', (e) => {
+  if (e.target.nodeName.toUpperCase() == "IMG") {
+    e.preventDefault();
+  }
+});
+// =========================================================================
+
+// Data
+const rulesData = [
+  {
+    category: "القوانين العامة",
+    icon: "🌍",
+    rules: [
+      "احترام جميع اللاعبين والإدارة، يُمنع السب أو الإهانة.",
+      "يُمنع نشر أي محتوى غير لائق أو إباحي في السيرفر.",
+      "يُمنع الإعلان عن سيرفرات أخرى أو روابط خارجية دون إذن الإدارة.",
+      "يمنع انتحال شخصية الإدارة أو اللاعبين الآخرين."
+    ]
+  },
+  {
+    category: "قوانين الدردشة (الشات)",
+    icon: "💬",
+    rules: [
+      "يُمنع السبام (Spam) أو تكرار الرسائل بشكل مزعج.",
+      "يُمنع استخدام الأحرف الكبيرة بشكل مبالغ فيه (Caps Lock).",
+      "يُمنع التنمر أو التهديد بالاختراق (Doxxing).",
+      "الرجاء استخدام القنوات المخصصة لكل موضوع (مثلاً: الدعم، الميمات، إلخ)."
+    ]
+  },
+  {
+    category: "قوانين اللعب (Gameplay)",
+    icon: "⛏️",
+    rules: [
+      "يُمنع استخدام أي برامج غش (Hacks) أو هاك (X-Ray).",
+      "يُمنع استغلال الثغرات (Bugs) في السيرفر، إذا وجدت ثغرة أبلغ الإدارة.",
+      "يُمنع التخريب (Griefing) في مناطق اللاعبين المحمية.",
+      "يُمنع القتل المتعمد (Team Killing) في أوضاع اللعب الجماعي."
+    ]
+  },
+  {
+    category: "قوانين الصوت (Voice)",
+    icon: "🎙️",
+    rules: [
+      "يُمنع الصراخ أو إصدار أصوات مزعجة في الرومات الصوتية.",
+      "يُمنع تشغيل الموسيقى أو المؤثرات الصوتية بصوت عالٍ دون إذن.",
+      "احترم خصوصية الآخرين، لا تسجلهم دون علمهم."
+    ]
+  },
+  {
+    category: "قوانين الإدارة",
+    icon: "👑",
+    rules: [
+      "قرارات الإدارة نهائية وغير قابلة للنقاش في القنوات العامة.",
+      "إذا كان لديك شكوى ضد إداري، افتح تكت (Ticket) في قناة #🎫-تذاكر-الدعم.",
+      "يُمنع التوسط لأي شخص تمت معاقبته."
+    ]
+  }
+];
+
+let currentCategory = "الكل";
+let searchQuery = "";
+
+// Elements
+const rulesGrid = document.getElementById('rulesGrid');
+const chipsContainer = document.getElementById('chips');
+const searchInput = document.getElementById('searchInput');
+const emptyState = document.getElementById('empty');
+const statCount = document.getElementById('statCount');
+
+// Init
+function init() {
+  let total = 0;
+  rulesData.forEach(cat => total += cat.rules.length);
+  statCount.textContent = total;
+
+  const categories = ["الكل", ...rulesData.map(c => c.category)];
+  categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = `chip ${cat === "الكل" ? "active" : ""}`;
+    btn.textContent = cat;
+    btn.onclick = () => {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      currentCategory = cat;
+      renderRules();
+    };
+    chipsContainer.appendChild(btn);
+  });
+
+  renderRules();
+}
+
+// Render Rules
+function renderRules() {
+  rulesGrid.innerHTML = '';
+  let hasResults = false;
+
+  rulesData.forEach(cat => {
+    if (currentCategory !== "الكل" && cat.category !== currentCategory) return;
+
+    const filteredRules = cat.rules.filter(rule => 
+      rule.includes(searchQuery) || cat.category.includes(searchQuery)
+    );
+
+    if (filteredRules.length === 0) return;
+
+    hasResults = true;
+
+    const card = document.createElement('div');
+    card.className = 'rule-card';
+    
+    let rulesHtml = filteredRules.map(rule => `<li>${rule}</li>`).join('');
+    
+    card.innerHTML = `
+      <div class="rule-head">
+        <h3><span>${cat.icon}</span> ${cat.category}</h3>
+        <span class="chev">▾</span>
+      </div>
+      <div class="rule-body">
+        <ul>${rulesHtml}</ul>
+      </div>
+    `;
+
+    card.querySelector('.rule-head').onclick = () => {
+      card.classList.toggle('open');
+    };
+
+    rulesGrid.appendChild(card);
+  });
+
+  emptyState.style.display = hasResults ? 'none' : 'block';
+}
+
+// Search Event
+searchInput.addEventListener('input', (e) => {
+  searchQuery = e.target.value.trim();
+  renderRules();
+});
+
+// FAQ Toggle
+document.querySelectorAll('.faq-q').forEach(btn => {
+  btn.onclick = () => {
+    const item = btn.parentElement;
+    item.classList.toggle('open');
+  };
+});
+
+// Copy Discord Link
+document.getElementById('copyInvite').onclick = () => {
+  const link = "https://discord.gg/PyScKawRw";
+  navigator.clipboard.writeText(link).then(() => {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  });
+};
+
+// Back to top
+const toTop = document.getElementById('toTop');
+window.addEventListener('scroll', () => {
+  toTop.style.display = window.scrollY > 500 ? 'flex' : 'none';
+});
+toTop.onclick = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// Start
+init();
+</script>
+</body>
+</html>
